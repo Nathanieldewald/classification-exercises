@@ -59,22 +59,18 @@ def get_telco_churn():
 
     return df
 
-def prep_iris(iris):
+def prep_iris():
+    iris = get_iris_data()
     iris = iris.drop(columns=['species_id', 'measurement_id'])
     iris = iris.rename(columns={'species_name': 'species'})
     num=iris.select_dtypes(include="number")
     char=iris.select_dtypes(include="object")
-    char = pd.get_dummies(char)
+    char_1 = pd.get_dummies(char)
+    char = pd.concat([char, char_1], axis=1)
     iris_clean = pd.concat([num, char], axis=1)
     return iris_clean
 
-def prep_telco(telco):
-    telco = telco.drop(columns=['customer_id', 'payment_type_id', 'internet_service_type_id', 'contract_type_id'])
-    num=telco.select_dtypes(include="number")
-    char=telco.select_dtypes(include="object")
-    char = pd.get_dummies(char)
-    telco_clean = pd.concat([num, char], axis=1)
-    return telco_clean
+
 
 def prep_telco():
     telco = get_telco_churn()
@@ -84,8 +80,9 @@ def prep_telco():
     telco['total_charges'] = telco['total_charges'].astype('float')
     num=telco.select_dtypes(include="number")
     char=telco.select_dtypes(include="object")
-    char = pd.get_dummies(char)
-    telco_clean = pd.concat([num, char], axis=1)
+    char_1 = pd.get_dummies(char, drop_first=True)
+    char = pd.concat([char, char_1], axis=1)
+    telco_clean = pd.concat([num, char_1], axis=1)
     return telco_clean
 
 def test_train(df, target):
@@ -93,3 +90,10 @@ def test_train(df, target):
     temp_train, test = train_test_split(df,  test_size= .2, random_state=123, stratify=df[target])
     train, validate = train_test_split(temp_train, test_size= .25, random_state=123, stratify=temp_train[target])
     return train, validate, test
+
+def eval_results(p):
+    alpha = .05
+    if p < alpha:
+        print("We reject the null hypothesis")
+    else:
+        print("We fail to reject the null hypothesis")
