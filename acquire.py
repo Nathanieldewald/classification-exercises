@@ -1,7 +1,8 @@
 import pandas as pd
 import os
-
 from sklearn.model_selection import train_test_split
+
+from termcolor import colored
 
 import env
 import numpy as np
@@ -79,6 +80,7 @@ def prep_telco():
     telco['total_charges'] = telco['total_charges'].replace({' ': 0})
     telco['total_charges'] = telco['total_charges'].astype('float')
     num=telco.select_dtypes(include="number")
+
     char=telco.select_dtypes(include="object")
     char_1 = pd.get_dummies(char, drop_first=True)
     char = pd.concat([char, char_1], axis=1)
@@ -97,3 +99,32 @@ def eval_results(p):
         print("We reject the null hypothesis")
     else:
         print("We fail to reject the null hypothesis")
+def prep_data(df):
+    sum_null = df.isnull().sum()
+    df = df.drop(columns=sum_null[sum_null > 0].index)
+    print(colored(f'Columns with null values: {sum_null[sum_null > 0].index}', 'red'))
+    return df
+
+def check_nulls(df):
+    return df.isnull().sum()
+
+def check_duplicates(df):
+    if df.nunique().sum() == df.shape[0]:
+        print('No duplicates')
+    else:
+        print('Duplicates exist')
+
+def train_validate_test_split(X_all, Y):
+    '''
+    This function takes in a dataframe, the target variable, and a seed for reproducibility.
+    It will split the data into train, validate, and test datasets.
+    '''
+
+    X_train, X_test, y_train, y_test = train_test_split(X_all, Y, test_size=0.2, random_state=123, stratify=Y)
+    X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train, test_size=0.25, random_state=123, stratify=y_train)
+    return X_train, X_validate, X_test, y_train, y_validate, y_test
+
+def outlier_cap(x):
+    x=x.clip(lower=x.quantile(0.01))
+    x=x.clip(upper=x.quantile(0.99))
+    return(x)
